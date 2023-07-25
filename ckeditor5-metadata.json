@@ -1,0 +1,17 @@
+{
+  "plugins": [
+    {
+      "name": "Bootstrapgrid",
+      "className": "Bootstrapgrid",
+      "description": "Adds text to the editor.",
+      "path": "src/bootstrapgrid.ts",
+      "uiComponents": [
+        {
+          "name": "bootstrapgridButton",
+          "type": "Button",
+          "iconPath": "theme/icons/boostrapgrid.svg"
+        }
+      ]
+    }
+  ]
+}
