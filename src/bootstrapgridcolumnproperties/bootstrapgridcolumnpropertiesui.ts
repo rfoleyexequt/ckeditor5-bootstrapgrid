@@ -19,6 +19,9 @@ import BootstrapgridColumnPropertiesView from './ui/bootstrapgridcolumnpropertie
 
 // ----------------------------- Properties -----------------------------
 import bootstrapgridColumnProperties from './../../theme/icons/bootstrapgrid-column-edit.svg';
+import {
+	defaultBreakpoints
+} from '../utils/ui/bootstrapgrid-properties';
 
 // ----------------------------- Utilities -----------------------------
 import { getNormalizedDefaultProperties, type NormalizedDefaultProperties } from '../utils/bootstrapgrid-properties';
