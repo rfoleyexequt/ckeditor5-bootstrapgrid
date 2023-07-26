@@ -65,84 +65,58 @@ export interface StyleValues {
 }
 
 /**
- * Conversion helper for upcasting border styles for view elements.
+ * Conversion helper for upcasting attributes using normalized CSS Classes.
  *
- * @param defaultBorder The default border values.
- * @param defaultBorder.color The default `borderColor` value.
- * @param defaultBorder.style The default `borderStyle` value.
- * @param defaultBorder.width The default `borderWidth` value.
- */
-export function upcastBorderStyles(
+ * @param options.modelAttribute The attribute to set.
+ * @param options.cssName The css name to convert.
+ * @param options.viewElement The view element name that should be converted.
+ * @param options.defaultValue The default value for the specified `modelAttribute`.
+ * @param options.shouldUpcast The function which returns `true` if style should be upcasted from this element.
+*/
+export function upcastCSSClassToAttribute(
 	conversion: Conversion,
-	viewElementName: string,
-	modelAttributes: StyleValues,
-	defaultBorder: StyleValues
+	options: {
+		modelAttribute: string;
+		styleName: string;
+		viewElement: string | RegExp;
+		defaultValue: string;
+		reduceBoxSides?: boolean;
+		shouldUpcast?: ( viewElement: ViewElement ) => boolean;
+	}
 ): void {
-	conversion.for( 'upcast' ).add( dispatcher => dispatcher.on( 'element:' + viewElementName, ( evt, data, conversionApi ) => {
-		// If the element was not converted by element-to-element converter,
-		// we should not try to convert the style. See #8393.
-		if ( !data.modelRange ) {
-			return;
-		}
+	const {
+		modelAttribute,
+		styleName,
+		viewElement,
+		defaultValue,
+		reduceBoxSides = false,
+		shouldUpcast = () => true
+	} = options;
 
-		// Check the most detailed properties. These will be always set directly or
-		// when using the "group" properties like: `border-(top|right|bottom|left)` or `border`.
-		const stylesToConsume = [
-			'border-top-width',
-			'border-top-color',
-			'border-top-style',
-			'border-bottom-width',
-			'border-bottom-color',
-			'border-bottom-style',
-			'border-right-width',
-			'border-right-color',
-			'border-right-style',
-			'border-left-width',
-			'border-left-color',
-			'border-left-style'
-		].filter( styleName => data.viewItem.hasStyle( styleName ) );
+	conversion.for( 'upcast' ).attributeToAttribute( 
+        {
+            view: {
+                    name: viewElement,
+                    styles: {
+			[ styleName ]: /[\s\S]+/
+                    }
+            },
+            model: {
+                    key: modelAttribute,
+                    value: ( viewElement: ViewElement ) => {
+                            if ( !shouldUpcast( viewElement ) ) {
+                                    return;
+                            }
 
-		if ( !stylesToConsume.length ) {
-			return;
-		}
+                            const normalized = viewElement.getNormalizedStyle( styleName ) as Record<Side, string>;
+                            const value = reduceBoxSides ? reduceBoxSidesValue( normalized ) : normalized;
 
-		const matcherPattern = {
-			styles: stylesToConsume
-		};
-
-		// Try to consume appropriate values from consumable values list.
-		if ( !conversionApi.consumable.test( data.viewItem, matcherPattern ) ) {
-			return;
-		}
-
-		const modelElement = [ ...data.modelRange.getItems( { shallow: true } ) ].pop();
-
-		conversionApi.consumable.consume( data.viewItem, matcherPattern );
-
-		const normalizedBorder = {
-			style: data.viewItem.getNormalizedStyle( 'border-style' ),
-			color: data.viewItem.getNormalizedStyle( 'border-color' ),
-			width: data.viewItem.getNormalizedStyle( 'border-width' )
-		};
-
-		const reducedBorder = {
-			style: reduceBoxSidesValue( normalizedBorder.style ),
-			color: reduceBoxSidesValue( normalizedBorder.color ),
-			width: reduceBoxSidesValue( normalizedBorder.width )
-		};
-
-		if ( reducedBorder.style !== defaultBorder.style ) {
-			conversionApi.writer.setAttribute( modelAttributes.style, reducedBorder.style, modelElement );
-		}
-
-		if ( reducedBorder.color !== defaultBorder.color ) {
-			conversionApi.writer.setAttribute( modelAttributes.color, reducedBorder.color, modelElement );
-		}
-
-		if ( reducedBorder.width !== defaultBorder.width ) {
-			conversionApi.writer.setAttribute( modelAttributes.width, reducedBorder.width, modelElement );
-		}
-	} ) );
+                            if ( defaultValue !== value ) {
+                                    return value;
+                            }
+                    }
+            }
+	} );
 }
 
 /**
@@ -153,7 +127,7 @@ export function downcastAttributeToCSSClass(
 	options: {
 		modelElement: string;
 		modelAttribute: string;
-		cssName: string;
+		styleName: string;
 	}
 ): void {
 	const { modelElement, modelAttribute, styleName } = options;
@@ -228,4 +202,35 @@ function reduceBoxSidesValue( style?: Style ): undefined | string | Style {
 	}
 
 	return topSideStyle;
+}
+
+/**
+ * Searches a class array for a matching classname
+ */
+function classNameExists(classNames: Array<string>, className: string): boolean {
+    
+    for ( const classItem of classNames ) {
+        const status = classItem.indexOf(className);
+        const result = (status !== -1) ? true : false;
+        if (result == true) {
+            return result;
+            break;
+        }
+    }
+    
+    return false;
+}
+
+function getClassFragmentFullName(classNames: Array<string>, classFragment: string): string | boolean {
+    
+    for ( const classItem of classNames ) {
+        const status = classItem.indexOf(classFragment);
+        const result = (status !== -1) ? true : false;
+        if (result == true) {
+            return classItem;
+            break;
+        }
+    }
+    
+    return false;
 }

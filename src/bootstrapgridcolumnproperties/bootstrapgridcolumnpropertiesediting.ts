@@ -12,6 +12,7 @@ import { type Schema, type Conversion, type ViewElement } from 'ckeditor5/src/en
 import BootstrapgridEditing from './../bootstrapgridediting';
 
 // ----------------------------- Commands -----------------------------
+import BootstrapgridColumnColCommand from './commands/bootstrapgridcolumncolcommand';
 
 // ----------------------------- Types -----------------------------
 import { getNormalizedDefaultProperties } from '../utils/bootstrapgrid-properties';
@@ -70,6 +71,11 @@ export default class BootstrapgridColumnPropertiesEditing extends Plugin {
             }
         );
 
-
+        enableProperty( schema, conversion, {
+            modelAttribute: 'bootstrapgridColumnCol',
+            styleName: 'col-',
+            defaultValue: defaultBootstrapgridColumnProperties.col
+	} );
+	editor.commands.add( 'bootstrapgridColumnCol', new BootstrapgridColumnColCommand( editor, defaultBootstrapgridColumnProperties.col ) );
     }
 }
